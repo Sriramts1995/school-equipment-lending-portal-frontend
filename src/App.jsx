@@ -8,25 +8,32 @@ import {
 } from "react-router-dom";
 
 import Navbar from "./components/Navbar";
-import Login from "./pages/Login";
+import Login from "./components/Login";
 import Home from "./pages/Home";
 import Dashboard from "./pages/Dashboard";
 import EquipmentManagement from "./pages/EquipmentManagement";
 import Requests from "./pages/Requests";
-import AddItem from "./pages/AddItem";
+import ItemManagement from "./pages/ItemManagement";
+import ItemBookings from "./pages/ItemBookings";
 
 function AppContent() {
   const [user, setUser] = useState(null); // { username, role }
   const navigate = useNavigate();
 
-  const handleLogin = (role, username) => {
-    setUser({ username, role });
+  const handleLogin = (role, username, name, email) => {
+    setUser({ username, role, name, email });
   };
 
   const handleLogout = () => {
     setUser(null);
-    navigate("/", { replace: true }); //redirects to root
-    //window.location.href = "/";
+    navigate("/", { replace: true }); // redirects to root
+  };
+
+  // Function to decide landing route dynamically
+  const getLandingRoute = () => {
+    if (user.role === "admin") return "/equipment";
+    if (user.role === "staff") return "/requests";
+    return "/dashboard"; // default for normal users
   };
 
   return (
@@ -38,19 +45,38 @@ function AppContent() {
             <Route path="*" element={<Login onLogin={handleLogin} />} />
           ) : (
             <>
-              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+              {/* Dynamic landing route */}
+              <Route
+                path="/"
+                element={<Navigate to={getLandingRoute()} replace />}
+              />
+
               <Route
                 path="/dashboard"
-                element={<Dashboard currentUser={user.username} />}
+                element={
+                  <Dashboard
+                    currentUser={user.username}
+                    userid={localStorage.getItem("loginid")}
+                  />
+                }
               />
               <Route path="/requests" element={<Requests />} />
+
               {user.role === "admin" && (
                 <>
-                  <Route path="/equipment" element={<EquipmentManagement />} />
-                  <Route path="/add-item" element={<AddItem />} />
+                  <Route
+                    path="/equipment"
+                    element={<EquipmentManagement />}
+                  />
+                  <Route
+                    path="/itemmanagement"
+                    element={<ItemManagement />}
+                  />
                 </>
               )}
+
               <Route path="/home" element={<Home />} />
+              <Route path="/itembookings" element={<ItemBookings />} />
             </>
           )}
         </Routes>

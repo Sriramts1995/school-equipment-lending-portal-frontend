@@ -1,6 +1,6 @@
-// src/components/LoginForm.jsx
+// src/pages/LoginForm.jsx
 import { useState } from "react";
-import { users } from "../services/api";
+import { loginUser, signupUser } from "../services/api";
 import schoolEquipment from "C:/Users/Sriram/school-equipment-portal/src/assets/logo.png";
 import { useNavigate } from "react-router-dom";
 
@@ -16,7 +16,7 @@ export default function LoginForm({ onLogin }) {
 
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const buttonId = e.nativeEvent.submitter.id;
 
@@ -45,15 +45,38 @@ export default function LoginForm({ onLogin }) {
         return;
       }
 
-      const user = users.find(
-        (u) => u.username === username && u.password === password
-      );
-      if (user) {
-        onLogin(user.role, user.username);
-        setError("");
+      // const user = users.find(
+      //   (u) => u.username === username && u.password === password
+      // );
+      // if (user) {
+      //   onLogin(user.role, user.username);
+      //   setError("");
+      //   navigate("/dashboard");
+      // } else {
+      //   setError("Invalid credentials");
+      // }
+      try {
+        // Call backend API
+        const response = await loginUser({
+          userName: username,
+          password: password,
+        });
+
+        console.log("Login response:", response);
+
+        // Example: backend returns { token, role }
+        if (response.token) {
+          localStorage.setItem("authToken", response.token);
+        }
+
+        // Call parent App.jsx handler
+        onLogin(response.role.toLowerCase() || "USER", response.userName.toLowerCase(), response.role.toLowerCase(), response.name.toLowerCase(), response.email.toLowerCase());
+        localStorage.setItem("uname", response.name.toLowerCase());
+        localStorage.setItem("loginid", response.id);
         navigate("/dashboard");
-      } else {
-        setError("Invalid credentials");
+      } catch (err) {
+        setError("Invalid username or password");
+        console.error("Login failed:", err);
       }
     } else {
       // Signup logic
@@ -73,20 +96,45 @@ export default function LoginForm({ onLogin }) {
         return;
       }
 
-      // Simulate registration
-      alert(
-        `User registered!\nName: ${name}\nEmail: ${email}\nMobile: ${mobile}\nUsername: ${username}`
-      );
+      // // Simulate registration
+      // alert(
+      //   `User registered!\nName: ${name}\nEmail: ${email}\nMobile: ${mobile}\nUsername: ${username}`
+      // );
 
-      // Reset form
-      setIsSignUp(false);
-      setName("");
-      setEmail("");
-      setMobile("");
-      setUsername("");
-      setPassword("");
-      setConfirmPassword("");
-      setError("");
+      
+
+      // // Reset form
+      // setIsSignUp(false);
+      // setName("");
+      // setEmail("");
+      // setMobile("");
+      // setUsername("");
+      // setPassword("");
+      // setConfirmPassword("");
+      // setError("");
+      try {
+        // Call backend signup API
+        const response = await signupUser({
+          name: name,
+          email: email,
+          password: password,
+          mobile: mobile,
+          loginId: username,
+          role: "USER",
+        });
+
+        console.log("Signup response:", response);
+
+        alert("Signup successful! Please login now.");
+        setIsSignUp(false);
+        setError("");
+        setUsername("");
+        setPassword("");
+        setConfirmPassword("");
+      } catch (err) {
+        console.error("Signup failed:", err);
+        setError("Signup failed. Try again.");
+      }
     }
   };
 
@@ -150,7 +198,7 @@ export default function LoginForm({ onLogin }) {
             placeholder="Username"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            required={!isSignUp} // ✅ only required in login mode
+            required={!isSignUp} // only required in login mode
             style={{ width: "100%", padding: "8px", marginBottom: "10px" }}
           />
 
@@ -159,7 +207,7 @@ export default function LoginForm({ onLogin }) {
             placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            required={!isSignUp} // ✅ only required in login mode
+            required={!isSignUp} // only required in login mode
             style={{ width: "100%", padding: "8px", marginBottom: "10px" }}
           />
 
@@ -203,7 +251,7 @@ export default function LoginForm({ onLogin }) {
             {isSignUp && (
               <button
                 id="cancel"
-                type="button" // <-- change here
+                type="button"
                 onClick={() => {
                   setIsSignUp(false);
                   setName("");

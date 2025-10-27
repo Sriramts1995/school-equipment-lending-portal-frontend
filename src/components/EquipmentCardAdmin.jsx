@@ -7,7 +7,7 @@ export default function EquipmentCardAdmin({ equipment, onupdate, ondelete }) {
   };
 
   const deleteItem = () => {
-    ondelete(equipment)
+    ondelete(equipment);
   };
 
   return (
@@ -26,10 +26,10 @@ export default function EquipmentCardAdmin({ equipment, onupdate, ondelete }) {
         <strong>Category:</strong> {equipment.category}
       </p>
       <p>
-        <strong>Condition:</strong> {equipment.condition}
+        <strong>Condition:</strong> {equipment.conditiontype}
       </p>
       <p>
-        <strong>Quantity:</strong> {equipment.quantity}
+        <strong>Available Quantity:</strong> {equipment.quantity}
       </p>
       <p>
         <strong>Available:</strong> {equipment.available ? "Yes" : "No"}

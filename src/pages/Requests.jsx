@@ -1,82 +1,83 @@
-// //src/pages/Requests.jsx
-// export default function Requests() {
-//   return (
-//     <div style={{ padding: '20px' }}>
-//       <h1>Borrow/Return Requests</h1>
-//       <p>Students can request equipment, staff/admin can approve or reject.</p>
-//     </div>
-//   );
-// }
+// src/pages/Requests.jsx
+import { useState, useEffect } from "react";
+import {
+  getAllBorrowRequests,
+  updateBorrowRequestStatus,
+} from "../services/api";
+import RequestsApproveReject from "../components/RequestsApproveReject";
 
-// src/pages/EquipmentManagement.jsx
-import { useNavigate } from "react-router-dom";
-import { useState } from "react";
-import EquipmentCard from "../components/RequestsApproveReject";
-import { equipmentList } from "../services/api";
+export default function Requests() {
+  const [requests, setRequests] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-export default function EquipmentManagement() {
-  const [category, setCategory] = useState("none");
-  const navigate = useNavigate();
+  // Fetch borrow requests on load
+  useEffect(() => {
+    async function fetchRequests() {
+      try {
+        const data = await getAllBorrowRequests();
+        // show only pending requests
+        setRequests(
+          data.filter((req) => req.status?.toUpperCase() === "PENDING")
+        );
+      } catch (error) {
+        console.error("Error fetching requests:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchRequests();
+  }, []);
 
-  const approveItem = () => {
-    alert("Item Approval is in progress");
+  // Approve request
+  const handleApprove = async (request) => {
+    try {
+      await updateBorrowRequestStatus(request.id, "APPROVED");
+
+      // remove it from UI after approval
+      setRequests((prev) => prev.filter((r) => r.id !== request.id));
+
+      alert(` Approved request ID: ${request.id}`);
+    } catch (err) {
+      alert("Failed to approve request. Check console for details.");
+      console.error(err);
+    }
   };
 
-  const rejectItem = () => {
-    alert("Item Rejection is in progress");
+  // Reject request
+  const handleReject = async (request) => {
+    try {
+      await updateBorrowRequestStatus(request.id, "REJECTED");
+
+      // remove it from UI after rejection
+      setRequests((prev) => prev.filter((r) => r.id !== request.id));
+
+      alert(`Rejected request ID: ${request.id}`);
+    } catch (err) {
+      alert("Failed to reject request. Check console for details.");
+      console.error(err);
+    }
   };
 
-  // ✅ Filter logic
-  const filteredList = equipmentList.filter((item) => {
-    if (category === "none" || category === false) return true; // show all
-    if (category === "available") return item.available === true; // only available
-    return item.category.toLowerCase() === category.toLowerCase(); // match specific category (Sports, Lab, etc.)
-  });
+  if (loading) return <p>Loading requests...</p>;
 
   return (
     <div style={{ padding: "20px" }}>
-      <div
-        style={{
-          display: "flex",
-          //justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: "20px",
-          gap: "12px", // spacing between title and dropdown
-        }}
-      >
-        <h1>Approve/Reject the Requests</h1>
-        <select
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
-          style={{
-            padding: "8px 12px",
-            borderRadius: "6px",
-            border: "1px solid #ccc",
-            fontSize: "14px",
-            cursor: "pointer",
-            height: "36px",
-          }}
-        >
-          <option value="none">None</option>
-          <option value="Sports">Sports</option>
-          <option value="Lab">Lab</option>
-          <option value="Musical">Musical</option>
-          <option value="Stationery">Stationery</option>
-          <option value="Electronics">Electronics</option>
-          <option value="available">available</option>
-        </select>
-      </div>
+      <h1>Borrow / Return Requests</h1>
+      <p>Approve or reject pending requests below.</p>
 
-      {/* 🔹 Equipment Cards */}
       <div style={{ display: "flex", flexWrap: "wrap" }}>
-        {filteredList.map((item) => (
-          <EquipmentCard
-            key={item.id}
-            equipment={item}
-            onapprove={() => approveItem(item)}
-            onreject={() => rejectItem(item)}
-          />
-        ))}
+        {requests.length > 0 ? (
+          requests.map((req) => (
+            <RequestsApproveReject
+              key={req.id}
+              request={req}
+              onapprove={() => handleApprove(req)}
+              onreject={() => handleReject(req)}
+            />
+          ))
+        ) : (
+          <p>No pending requests.</p>
+        )}
       </div>
     </div>
   );

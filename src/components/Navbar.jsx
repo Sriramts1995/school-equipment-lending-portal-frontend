@@ -1,5 +1,6 @@
-//src/components/Navbar.jsx
+// src/components/Navbar.jsx
 import { Link } from "react-router-dom";
+
 export default function Navbar({ userRole }) {
   return (
     <nav
@@ -14,28 +15,56 @@ export default function Navbar({ userRole }) {
         zIndex: 1000,
       }}
     >
-      <Link
-        to="/dashboard"
-        style={{ marginRight: "15px", color: "white", textDecoration: "none" }}
-      >
-        Dashboard
-      </Link>
-
+      {/* ADMIN → Equipments + Requests */}
       {userRole === "admin" && (
+        <>
+          <Link
+            to="/equipment"
+            style={{
+              marginRight: "15px",
+              color: "white",
+              textDecoration: "none",
+            }}
+          >
+            Equipment
+          </Link>
+          <Link
+            to="/requests"
+            style={{
+              marginRight: "15px",
+              color: "white",
+              textDecoration: "none",
+            }}
+          >
+            Requests
+          </Link>
+        </>
+      )}
+
+      {/* USER → Dashboard only */}
+      {userRole === "user" && (
         <Link
-          to="/equipment"
+          to="/dashboard"
           style={{
             marginRight: "15px",
             color: "white",
             textDecoration: "none",
           }}
         >
-          Equipment
+          Dashboard
         </Link>
       )}
 
-      {(userRole === "admin" || userRole === "staff") && (
-        <Link to="/requests" style={{ color: "white", textDecoration: "none" }}>
+      {/* STAFF → Requests only */}
+      {userRole === "staff" && (
+        <Link
+          to="/requests"
+          style={{
+            marginRight: "15px",
+            color: "white",
+            textDecoration: "none",
+          }}
+        >
           Requests
         </Link>
       )}

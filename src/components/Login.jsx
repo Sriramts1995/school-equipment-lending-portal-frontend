@@ -1,5 +1,5 @@
-//src/pages/Login.jsx
-import LoginForm from '../components/LoginForm';
+//src/components/Login.jsx
+import LoginForm from "../pages/LoginForm";
 
 export default function Login({ onLogin }) {
   return <LoginForm onLogin={onLogin} />;

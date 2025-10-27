@@ -1,12 +1,18 @@
 // src/components/EquipmentCard.jsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
-export default function EquipmentCard({ equipment, onBook }) {
-  const [startDate, setStartDate] = useState(() => {
-    const today = new Date();
-    return today.toISOString().split("T")[0]; // format YYYY-MM-DD
-  });
-  const [endDate, setEndDate] = useState("");
+export default function EquipmentCard({ equipment, onBook, requestStatus }) {
+  const savedStart = localStorage.getItem(`startDate_${equipment.id}`);
+  const savedEnd = localStorage.getItem(`endDate_${equipment.id}`);
+  const [startDate, setStartDate] = useState(
+    savedStart || new Date().toISOString().split("T")[0]
+  );
+  const [endDate, setEndDate] = useState(savedEnd || "");
+
+  useEffect(() => {
+    localStorage.setItem(`startDate_${equipment.id}`, startDate);
+    localStorage.setItem(`endDate_${equipment.id}`, endDate);
+  }, [startDate, endDate, equipment.id]);
 
   const handleBook = () => {
     if (!startDate || !endDate) {
@@ -15,6 +21,21 @@ export default function EquipmentCard({ equipment, onBook }) {
     }
     onBook(equipment, startDate, endDate);
   };
+
+  // UI logic for button text & state
+  const getButtonConfig = () => {
+    switch (requestStatus?.toUpperCase()) {
+      case "PENDING":
+        return { label: "Pending", color: "#ccc", disabled: true };
+      case "APPROVED":
+        return { label: "Return", color: "#1a73e8", disabled: false };
+      case "REJECTED":
+      default:
+        return { label: "Book Item", color: "#081711ff", disabled: false };
+    }
+  };
+
+  const { label, color, disabled } = getButtonConfig();
 
   return (
     <div
@@ -32,16 +53,15 @@ export default function EquipmentCard({ equipment, onBook }) {
         <strong>Category:</strong> {equipment.category}
       </p>
       <p>
-        <strong>Condition:</strong> {equipment.condition}
+        <strong>Condition:</strong> {equipment.conditiontype}
       </p>
       <p>
-        <strong>Quantity:</strong> {equipment.quantity}
+        <strong>Available Quantity:</strong> {equipment.quantity}
       </p>
       <p>
         <strong>Available:</strong> {equipment.available ? "Yes" : "No"}
       </p>
 
-      {/*Show date pickers if item is available */}
       {equipment.available && (
         <>
           <div style={{ marginBottom: "10px" }}>
@@ -51,7 +71,7 @@ export default function EquipmentCard({ equipment, onBook }) {
             <input
               type="date"
               value={startDate}
-              min={new Date().toISOString().split("T")[0]} // restrict to today or later
+              min={new Date().toISOString().split("T")[0]}
               onChange={(e) => setStartDate(e.target.value)}
               style={{
                 width: "90%",
@@ -70,7 +90,7 @@ export default function EquipmentCard({ equipment, onBook }) {
             <input
               type="date"
               value={endDate}
-              min={startDate} // end date must be same or after start date
+              min={startDate}
               onChange={(e) => setEndDate(e.target.value)}
               style={{
                 width: "90%",
@@ -83,18 +103,19 @@ export default function EquipmentCard({ equipment, onBook }) {
           </div>
 
           <button
-            onClick={handleBook}
+            onClick={!disabled ? handleBook : undefined}
+            disabled={disabled}
             style={{
               width: "100%",
               padding: "8px 16px",
-              backgroundColor: "#081711ff",
+              backgroundColor: color,
               color: "white",
               border: "none",
               borderRadius: "5px",
-              cursor: "pointer",
+              cursor: disabled ? "not-allowed" : "pointer",
             }}
           >
-            Book Item
+            {label}
           </button>
         </>
       )}

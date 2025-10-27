@@ -1,29 +1,38 @@
 // src/pages/EquipmentManagement.jsx
 import { useNavigate } from "react-router-dom";
 import EquipmentCard from "../components/EquipmentCardAdmin";
-import { equipmentList } from "../services/api";
-import { useState } from "react";
+import { getAllEquipment } from "../services/api";
+import { useState, useEffect } from "react";
+
 export default function EquipmentManagement() {
   const [category, setCategory] = useState("none");
+  const [equipmentList, setEquipmentList] = useState([]);
   const navigate = useNavigate();
 
+  useEffect(() => {
+    const fetchData = async () => {
+      const data = await getAllEquipment();
+      setEquipmentList(data);
+    };
+    fetchData();
+  }, []);
+
   const handleAddItem = () => {
-    navigate("/add-item");
+    navigate("/itemmanagement", { state: { mode: "add" } }); // Add mode, empty form
   };
 
-    const updateItem = () => {
-    alert("Item Update is in progress");
+  const handleUpdateItem = (item) => {
+    navigate("/itemmanagement", { state: { item, mode: "update" } }); // Update mode, prefilled
   };
 
-  const deleteItem = () => {
-    alert("Item Deletion is in progress");
+  const handleDeleteItem = (item) => {
+    navigate("/itemmanagement", { state: { item, mode: "delete" } }); // Delete mode, prefilled
   };
 
-  // ✅ Filter logic
   const filteredList = equipmentList.filter((item) => {
-    if (category === "none" || category === false) return true; // show all
-    if (category === "available") return item.available === true; // only available
-    return item.category.toLowerCase() === category.toLowerCase(); // match specific category (Sports, Lab, etc.)
+    if (category === "none" || category === false) return true;
+    if (category === "available") return item.available === true;
+    return item.category.toLowerCase() === category.toLowerCase();
   });
 
   return (
@@ -31,10 +40,9 @@ export default function EquipmentManagement() {
       <div
         style={{
           display: "flex",
-          //justifyContent: "space-between",
           alignItems: "center",
           marginBottom: "20px",
-          gap: "12px", // spacing between title and dropdown
+          gap: "12px",
         }}
       >
         <h1>Manage Equipments</h1>
@@ -46,7 +54,6 @@ export default function EquipmentManagement() {
             padding: "8px 12px",
             borderRadius: "6px",
             border: "1px solid #ccc",
-            fontSize: "14px",
             cursor: "pointer",
             height: "36px",
           }}
@@ -60,7 +67,6 @@ export default function EquipmentManagement() {
           <option value="available">available</option>
         </select>
 
-        {/* ✅ Single Add Item Button */}
         <button
           onClick={handleAddItem}
           style={{
@@ -76,12 +82,13 @@ export default function EquipmentManagement() {
         </button>
       </div>
 
-      {/* 🔹 Equipment Cards */}
       <div style={{ display: "flex", flexWrap: "wrap" }}>
         {filteredList.map((item) => (
-          <EquipmentCard key={item.id} equipment={item} 
-          onupdate={() => updateItem(item)}
-          ondelete={() => deleteItem(item)}
+          <EquipmentCard
+            key={item.id}
+            equipment={item}
+            onupdate={() => handleUpdateItem(item)}
+            ondelete={() => handleDeleteItem(item)}
           />
         ))}
       </div>

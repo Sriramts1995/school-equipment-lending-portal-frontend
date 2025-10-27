@@ -1,27 +1,75 @@
-//src/pages/Dashboard.jsx
-import { useState } from "react";
+// src/pages/Dashboard.jsx
+import { useState, useEffect } from "react";
 import EquipmentCard from "../components/EquipmentCard";
-import { equipmentList, createBookingRequest } from "../services/api";
+import { getAllEquipment, getBorrowRequestsByUser } from "../services/api";
+import { useNavigate } from "react-router-dom";
 
-export default function Dashboard({ currentUser }) {
+export default function Dashboard({ currentUser, userid }) {
   const [category, setCategory] = useState("none");
-  //const handlecategory = (e = {});
-  const handleBookItem = async (equipment) => {
-    try {
-      const result = await createBookingRequest(equipment.name, currentUser);
-      alert(
-        `Request created successfully!\n\nEquipment: ${result.equipment}\nStatus: ${result.status}`
-      );
-    } catch (err) {
-      alert(`Failed to create request: ${err}`);
+  const [equipmentList, setEquipmentList] = useState([]);
+  const [userRequests, setUserRequests] = useState([]);
+  const navigate = useNavigate();
+
+  const userId = Number(userid) || 1;
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchData = async () => {
+      try {
+        const [equipmentData, userBorrowData] = await Promise.all([
+          getAllEquipment(),
+          getBorrowRequestsByUser(userId),
+        ]);
+        if (isMounted) {
+          setEquipmentList(equipmentData);
+          setUserRequests(userBorrowData);
+        }
+      } catch (err) {
+        console.error("Error loading data:", err);
+      }
+    };
+    fetchData();
+    return () => {
+      isMounted = false;
+    };
+  }, [userId]);
+
+  // Navigate to booking/return page
+  const handleAction = (
+    equipment,
+    startDate,
+    endDate,
+    mode,
+    requestId = null
+  ) => {
+    navigate("/itembookings", {
+      state: { equipment, startDate, endDate, mode, requestId },
+    });
+  };
+
+  // Find request by equipmentId
+  const getUserRequest = (equipmentId) => {
+    return userRequests.find((r) => r.equipment?.id === equipmentId);
+  };
+
+  // Handle button click
+  const handleBookItem = (equipment, startDate, endDate) => {
+    const request = getUserRequest(equipment.id);
+    const status = request ? request.status?.toUpperCase() : null;
+
+    if (status === "APPROVED") {
+      // returning the item — pass requestId to next page
+      handleAction(equipment, startDate, endDate, "return", request.id);
+    } else {
+      // booking new item — no requestId yet
+      handleAction(equipment, startDate, endDate, "book");
     }
   };
 
-  // ✅ Filter logic
   const filteredList = equipmentList.filter((item) => {
-    if (category === "none" || category === false) return true; // show all
-    if (category === "available") return item.available === true; // only available
-    return item.category.toLowerCase() === category.toLowerCase(); // match specific category (Sports, Lab, etc.)
+    if (category === "none" || category === false) return true;
+    if (category === "available") return item.available === true;
+    return item.category.toLowerCase() === category.toLowerCase();
   });
 
   return (
@@ -29,10 +77,9 @@ export default function Dashboard({ currentUser }) {
       <div
         style={{
           display: "flex",
-          //justifyContent: "space-between",
           alignItems: "center",
           marginBottom: "20px",
-          gap: "12px", // spacing between title and dropdown
+          gap: "12px",
         }}
       >
         <h1>Dashboard</h1>
@@ -54,18 +101,26 @@ export default function Dashboard({ currentUser }) {
           <option value="Musical">Musical</option>
           <option value="Stationery">Stationery</option>
           <option value="Electronics">Electronics</option>
-          <option value="available">available</option>
+          <option value="available">Available</option>
         </select>
       </div>
+
       <p>All equipment is listed below:</p>
+
       <div style={{ display: "flex", flexWrap: "wrap" }}>
-        {filteredList.map((item, index) => (
-          <EquipmentCard
-            key={index}
-            equipment={item}
-            onBook={() => handleBookItem(item)}
-          />
-        ))}
+        {filteredList.map((item) => {
+          const request = getUserRequest(item.id);
+          const status = request ? request.status?.toUpperCase() : null;
+
+          return (
+            <EquipmentCard
+              key={item.id}
+              equipment={item}
+              onBook={(equip, s, e) => handleBookItem(equip, s, e)}
+              requestStatus={status}
+            />
+          );
+        })}
       </div>
     </div>
   );
