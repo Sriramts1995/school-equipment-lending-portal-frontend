@@ -8,6 +8,7 @@ export default function Dashboard({ currentUser, userid }) {
   const [category, setCategory] = useState("none");
   const [equipmentList, setEquipmentList] = useState([]);
   const [userRequests, setUserRequests] = useState([]);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   const userId = Number(userid) || 1;
@@ -16,25 +17,30 @@ export default function Dashboard({ currentUser, userid }) {
     let isMounted = true;
     const fetchData = async () => {
       try {
+        setLoading(true);
         const [equipmentData, userBorrowData] = await Promise.all([
           getAllEquipment(),
           getBorrowRequestsByUser(userId),
         ]);
-        if (isMounted) {
-          setEquipmentList(equipmentData);
-          setUserRequests(userBorrowData);
-        }
+
+        // artificial delay for demo visibility
+        setTimeout(() => {
+          if (isMounted) {
+            setEquipmentList(equipmentData);
+            setUserRequests(userBorrowData);
+            setLoading(false);
+          }
+        }, 1500); // 1.5s delay to show "Loading..."
       } catch (err) {
         console.error("Error loading data:", err);
+        if (isMounted) setLoading(false);
       }
     };
+
     fetchData();
-    return () => {
-      isMounted = false;
-    };
+    return () => (isMounted = false);
   }, [userId]);
 
-  // Navigate to booking/return page
   const handleAction = (
     equipment,
     startDate,
@@ -47,21 +53,15 @@ export default function Dashboard({ currentUser, userid }) {
     });
   };
 
-  // Find request by equipmentId
-  const getUserRequest = (equipmentId) => {
-    return userRequests.find((r) => r.equipment?.id === equipmentId);
-  };
+  const getUserRequest = (equipmentId) =>
+    userRequests.find((r) => r.equipment?.id === equipmentId);
 
-  // Handle button click
   const handleBookItem = (equipment, startDate, endDate) => {
     const request = getUserRequest(equipment.id);
     const status = request ? request.status?.toUpperCase() : null;
-
     if (status === "APPROVED") {
-      // returning the item — pass requestId to next page
       handleAction(equipment, startDate, endDate, "return", request.id);
     } else {
-      // booking new item — no requestId yet
       handleAction(equipment, startDate, endDate, "book");
     }
   };
@@ -105,23 +105,28 @@ export default function Dashboard({ currentUser, userid }) {
         </select>
       </div>
 
-      <p>All equipment is listed below:</p>
+      {loading ? (
+        <p style={{ fontStyle: "italic", color: "gray" }}>Loading data...</p>
+      ) : (
+        <>
+          <p>All equipment is listed below:</p>
+          <div style={{ display: "flex", flexWrap: "wrap" }}>
+            {filteredList.map((item) => {
+              const request = getUserRequest(item.id);
+              const status = request ? request.status?.toUpperCase() : null;
 
-      <div style={{ display: "flex", flexWrap: "wrap" }}>
-        {filteredList.map((item) => {
-          const request = getUserRequest(item.id);
-          const status = request ? request.status?.toUpperCase() : null;
-
-          return (
-            <EquipmentCard
-              key={item.id}
-              equipment={item}
-              onBook={(equip, s, e) => handleBookItem(equip, s, e)}
-              requestStatus={status}
-            />
-          );
-        })}
-      </div>
+              return (
+                <EquipmentCard
+                  key={item.id}
+                  equipment={item}
+                  onBook={(equip, s, e) => handleBookItem(equip, s, e)}
+                  requestStatus={status}
+                />
+              );
+            })}
+          </div>
+        </>
+      )}
     </div>
   );
 }

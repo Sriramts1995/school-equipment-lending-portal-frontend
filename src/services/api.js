@@ -57,7 +57,7 @@
 // ];
 
 // Temporary in-memory list for requests
-export const requests = [];
+//export const requests = [];
 
 // Mock API call to create a booking request
 // export function createBookingRequest(equipmentName, username) {
@@ -85,21 +85,33 @@ export const requests = [];
 
 const BASE_URL = "http://localhost:8080";
 
+// --- Utility: central fetch wrapper ---
+async function fetchWithAuth(url, options = {}) {
+  const token = localStorage.getItem("authToken");
+  const headers = {
+    "Content-Type": "application/json",
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...options.headers,
+  };
+
+  const response = await fetch(url, { ...options, headers });
+  if (response.status === 401) {
+    console.warn("Unauthorized — possible token expiry");
+    // could auto-logout or refresh token here if implemented
+  }
+  return response;
+}
+
+// --- Auth APIs (NO Authorization header needed) ---
 export async function loginUser(credentials) {
   try {
     const response = await fetch(`${BASE_URL}/auth/login`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(credentials),
     });
+    if (!response.ok) throw new Error(`Login failed: ${response.status}`);
 
-    if (!response.ok) {
-      throw new Error(`Login failed: ${response.status}`);
-    }
-
-    // Assuming your backend returns a JSON with user info or token
     const data = await response.json();
     return data;
   } catch (error) {
@@ -108,23 +120,17 @@ export async function loginUser(credentials) {
   }
 }
 
-// SIGNUP API CALL
 export async function signupUser(userData) {
   try {
     const response = await fetch(`${BASE_URL}/auth/signup`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(userData),
     });
-
     if (!response.ok) {
       const errorText = await response.text();
       throw new Error(`Signup failed: ${errorText}`);
     }
-
-    //const data = await response.json();
     return "Success";
   } catch (error) {
     console.error("Error signing up:", error);
@@ -132,42 +138,27 @@ export async function signupUser(userData) {
   }
 }
 
+// --- Equipment APIs ---
 export async function getAllEquipment() {
   try {
-    //const response = await fetch(`${BASE_URL}/api/v1/equipment`);
-    const response = await fetch(`${BASE_URL}/api/v1/equipment`, {
+    const response = await fetchWithAuth(`${BASE_URL}/api/v1/equipment`, {
       method: "GET",
-      headers: {
-        "Authorization": "Bearer " + localStorage.getItem("authToken"),
-      },
     });
-    if (!response.ok) {
-      throw new Error(`Failed to fetch equipment: ${response.status}`);
-    }
-
-    const data = await response.json();
-    return data; // should be an array
+    if (!response.ok) throw new Error(`Failed to fetch equipment: ${response.status}`);
+    return await response.json();
   } catch (error) {
     console.error("Error fetching equipment:", error);
-    return []; // return empty array on error to prevent crashes
+    return [];
   }
 }
 
 export async function addItem(item) {
   try {
-    const response = await fetch(`${BASE_URL}/api/v1/equipment`, {
+    const response = await fetchWithAuth(`${BASE_URL}/api/v1/equipment`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer " + localStorage.getItem("authToken"),
-      },
       body: JSON.stringify(item),
     });
-
-    if (!response.ok) {
-      throw new Error("Failed to add item");
-    }
-
+    if (!response.ok) throw new Error("Failed to add item");
     return await response.json();
   } catch (error) {
     console.error("API error:", error);
@@ -177,19 +168,11 @@ export async function addItem(item) {
 
 export async function updateItemById(item) {
   try {
-    const response = await fetch(`${BASE_URL}/api/v1/equipment`, {
+    const response = await fetchWithAuth(`${BASE_URL}/api/v1/equipment`, {
       method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer " + localStorage.getItem("authToken"),
-      },
       body: JSON.stringify(item),
     });
-
-    if (!response.ok) {
-      throw new Error("Failed to update item");
-    }
-
+    if (!response.ok) throw new Error("Failed to update item");
     return await response.json();
   } catch (error) {
     console.error("API error (updateItemById):", error);
@@ -199,12 +182,8 @@ export async function updateItemById(item) {
 
 export async function deleteItemById(id) {
   try {
-    const response = await fetch(`${BASE_URL}/api/v1/equipment/${id}`, {
+    const response = await fetchWithAuth(`${BASE_URL}/api/v1/equipment/${id}`, {
       method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer " + localStorage.getItem("authToken"),
-      },
     });
     if (!response.ok) throw new Error("Failed to delete item");
     return await response;
@@ -214,63 +193,30 @@ export async function deleteItemById(id) {
   }
 }
 
+// --- Borrow Requests ---
 export async function bookItem(data) {
   try {
-    const response = await fetch(`${BASE_URL}/api/v1/borrowrequest`, {
+    const response = await fetchWithAuth(`${BASE_URL}/api/v1/borrowrequest`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer " + localStorage.getItem("authToken"),
-      },
-      body: JSON.stringify(data), // include borrow request data here
+      body: JSON.stringify(data),
     });
-
     if (!response.ok) {
       const errorText = await response.text();
       throw new Error(`Failed to create borrow request: ${errorText}`);
     }
-
-    // return parsed JSON response (e.g., created borrow request)
     return await response.json();
   } catch (error) {
-    console.error("API error (bookitem):", error);
+    console.error("API error (bookItem):", error);
     throw error;
   }
 }
 
-export async function returnItem(id) {
-  try {
-    const response = await fetch(`${BASE_URL}/api/v1/equipment/${id}`, {
-      method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer " + localStorage.getItem("authToken"),
-      },
-    });
-    if (!response.ok) throw new Error("Failed to delete item");
-    return await response;
-  } catch (error) {
-    console.error("API error (deleteItemById):", error);
-    throw error;
-  }
-}
-
-// Fetch all borrow requests
 export async function getAllBorrowRequests() {
   try {
-    const response = await fetch(`${BASE_URL}/api/v1/borrowrequest`, {
+    const response = await fetchWithAuth(`${BASE_URL}/api/v1/borrowrequest`, {
       method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer " + localStorage.getItem("authToken"),
-      },
     });
-
-    if (!response.ok) {
-      const err = await response.text();
-      throw new Error(`Failed to fetch borrow requests: ${err}`);
-    }
-
+    if (!response.ok) throw new Error("Failed to fetch borrow requests");
     return await response.json();
   } catch (error) {
     console.error("API error (getAllBorrowRequests):", error);
@@ -278,19 +224,11 @@ export async function getAllBorrowRequests() {
   }
 }
 
-// Get borrow requests for a specific user
 export async function getBorrowRequestsByUser(userId) {
   try {
-    const response = await fetch(
-      `${BASE_URL}/api/v1/borrowrequest/user/${userId}`,
-      {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer " + localStorage.getItem("authToken"),
-        },
-      }
-    );
+    const response = await fetchWithAuth(`${BASE_URL}/api/v1/borrowrequest/user/${userId}`, {
+      method: "GET",
+    });
     if (!response.ok) throw new Error("Failed to fetch user borrow requests");
     return await response.json();
   } catch (error) {
@@ -300,37 +238,29 @@ export async function getBorrowRequestsByUser(userId) {
 }
 
 export async function updateBorrowRequestStatus(requestId, newStatus) {
-  const response = await fetch(
+  const response = await fetchWithAuth(
     `${BASE_URL}/api/v1/borrowrequest/updatestatus?requestId=${requestId}&status=${newStatus}`,
-    {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer " + localStorage.getItem("authToken"),
-      },
-    }
+    { method: "PATCH" }
   );
   if (!response.ok) throw new Error("Failed to update status");
   return await response;
 }
 
+// --- Logout ---
 export const logoutUser = async () => {
   try {
     const response = await fetch(`${BASE_URL}/auth/logout`, {
-      method: "POST", // or "GET" if your backend expects it
-      headers: {
-        "Content-Type": "application/json",
-         "Authorization": "Bearer " + localStorage.getItem("authToken"),
-      },
-      credentials: "include", // include cookies/session if applicable
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
     });
 
     if (response.ok) {
-      const message = await response.text(); // "User logout successfully"
+      localStorage.removeItem("authToken");
+      const message = await response.text();
       console.log("Logout success:", message);
       return message;
     } else {
-      console.error("Logout failed:", response.status);
       throw new Error("Logout failed");
     }
   } catch (error) {
