@@ -14,72 +14,72 @@
 // src/services/api.js
 
 // Dummy equipment data
-export const equipmentList = [
-  {
-    id: 1,
-    name: "Microscope",
-    category: "Lab",
-    condition: "Good",
-    quantity: 5,
-    available: true,
-  },
-  {
-    id: 2,
-    name: "Football",
-    category: "Sports",
-    condition: "Fair",
-    quantity: 10,
-    available: true,
-  },
-  {
-    id: 3,
-    name: "Camera",
-    category: "Media",
-    condition: "Excellent",
-    quantity: 2,
-    available: false,
-  },
-  {
-    id: 4,
-    name: "Projector",
-    category: "Classroom",
-    condition: "Good",
-    quantity: 1,
-    available: true,
-  },
-];
+// export const equipmentList = [
+//   {
+//     id: 1,
+//     name: "Microscope",
+//     category: "Lab",
+//     condition: "Good",
+//     quantity: 5,
+//     available: true,
+//   },
+//   {
+//     id: 2,
+//     name: "Football",
+//     category: "Sports",
+//     condition: "Fair",
+//     quantity: 10,
+//     available: true,
+//   },
+//   {
+//     id: 3,
+//     name: "Camera",
+//     category: "Media",
+//     condition: "Excellent",
+//     quantity: 2,
+//     available: false,
+//   },
+//   {
+//     id: 4,
+//     name: "Projector",
+//     category: "Classroom",
+//     condition: "Good",
+//     quantity: 1,
+//     available: true,
+//   },
+// ];
 
 // Dummy user roles
-export const users = [
-  { username: "user", password: "pass", role: "user" },
-  { username: "staff", password: "pass", role: "staff" },
-  { username: "admin", password: "pass", role: "admin" },
-];
+// export const users = [
+//   { username: "user", password: "pass", role: "user" },
+//   { username: "staff", password: "pass", role: "staff" },
+//   { username: "admin", password: "pass", role: "admin" },
+// ];
 
 // Temporary in-memory list for requests
 export const requests = [];
 
 // Mock API call to create a booking request
-export function createBookingRequest(equipmentName, username) {
-  return new Promise((resolve, reject) => {
-    const equipment = equipmentList.find((e) => e.name === equipmentName);
-    if (!equipment) {
-      reject("Equipment not found");
-    } else if (!equipment.available) {
-      reject("Item not available");
-    } else {
-      const newRequest = {
-        id: requests.length + 1,
-        equipment: equipmentName,
-        requestedBy: username,
-        status: "Pending",
-        date: new Date().toLocaleString(),
-      };
-      requests.push(newRequest);
-      resolve(newRequest);
-    }
-  });
-}
+// export function createBookingRequest(equipmentName, username) {
+//   return new Promise((resolve, reject) => {
+//     const equipment = equipmentList.find((e) => e.name === equipmentName);
+//     if (!equipment) {
+//       reject("Equipment not found");
+//     } else if (!equipment.available) {
+//       reject("Item not available");
+//     } else {
+//       const newRequest = {
+//         id: requests.length + 1,
+//         equipment: equipmentName,
+//         requestedBy: username,
+//         status: "Pending",
+//         date: new Date().toLocaleString(),
+//       };
+//       requests.push(newRequest);
+//       resolve(newRequest);
+//     }
+//   });
+// }
 
 // src/services/api.js
 
@@ -138,7 +138,7 @@ export async function getAllEquipment() {
     const response = await fetch(`${BASE_URL}/api/v1/equipment`, {
       method: "GET",
       headers: {
-        Authorization: "Bearer " + localStorage.getItem("authToken"),
+        "Authorization": "Bearer " + localStorage.getItem("authToken"),
       },
     });
     if (!response.ok) {
@@ -159,7 +159,7 @@ export async function addItem(item) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: "Bearer " + localStorage.getItem("authToken"),
+        "Authorization": "Bearer " + localStorage.getItem("authToken"),
       },
       body: JSON.stringify(item),
     });
@@ -181,7 +181,7 @@ export async function updateItemById(item) {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
-        Authorization: "Bearer " + localStorage.getItem("authToken"),
+        "Authorization": "Bearer " + localStorage.getItem("authToken"),
       },
       body: JSON.stringify(item),
     });
@@ -203,7 +203,7 @@ export async function deleteItemById(id) {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",
-        Authorization: "Bearer " + localStorage.getItem("authToken"),
+        "Authorization": "Bearer " + localStorage.getItem("authToken"),
       },
     });
     if (!response.ok) throw new Error("Failed to delete item");
@@ -220,7 +220,7 @@ export async function bookItem(data) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: "Bearer " + localStorage.getItem("authToken"),
+        "Authorization": "Bearer " + localStorage.getItem("authToken"),
       },
       body: JSON.stringify(data), // include borrow request data here
     });
@@ -244,7 +244,7 @@ export async function returnItem(id) {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",
-        Authorization: "Bearer " + localStorage.getItem("authToken"),
+        "Authorization": "Bearer " + localStorage.getItem("authToken"),
       },
     });
     if (!response.ok) throw new Error("Failed to delete item");
@@ -262,7 +262,7 @@ export async function getAllBorrowRequests() {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
-        Authorization: "Bearer " + localStorage.getItem("authToken"),
+        "Authorization": "Bearer " + localStorage.getItem("authToken"),
       },
     });
 
@@ -287,7 +287,7 @@ export async function getBorrowRequestsByUser(userId) {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-          Authorization: "Bearer " + localStorage.getItem("authToken"),
+          "Authorization": "Bearer " + localStorage.getItem("authToken"),
         },
       }
     );
@@ -306,10 +306,35 @@ export async function updateBorrowRequestStatus(requestId, newStatus) {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
-        Authorization: "Bearer " + localStorage.getItem("authToken"),
+        "Authorization": "Bearer " + localStorage.getItem("authToken"),
       },
     }
   );
   if (!response.ok) throw new Error("Failed to update status");
   return await response;
 }
+
+export const logoutUser = async () => {
+  try {
+    const response = await fetch(`${BASE_URL}/auth/logout`, {
+      method: "POST", // or "GET" if your backend expects it
+      headers: {
+        "Content-Type": "application/json",
+         "Authorization": "Bearer " + localStorage.getItem("authToken"),
+      },
+      credentials: "include", // include cookies/session if applicable
+    });
+
+    if (response.ok) {
+      const message = await response.text(); // "User logout successfully"
+      console.log("Logout success:", message);
+      return message;
+    } else {
+      console.error("Logout failed:", response.status);
+      throw new Error("Logout failed");
+    }
+  } catch (error) {
+    console.error("Logout API error:", error);
+    throw error;
+  }
+};

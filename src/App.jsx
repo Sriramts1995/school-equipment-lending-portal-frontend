@@ -16,6 +16,9 @@ import Requests from "./pages/Requests";
 import ItemManagement from "./pages/ItemManagement";
 import ItemBookings from "./pages/ItemBookings";
 
+// 🔹 Import API function
+import { logoutUser } from "./services/api";
+
 function AppContent() {
   const [user, setUser] = useState(null); // { username, role }
   const navigate = useNavigate();
@@ -24,12 +27,24 @@ function AppContent() {
     setUser({ username, role, name, email });
   };
 
-  const handleLogout = () => {
-    setUser(null);
-    navigate("/", { replace: true }); // redirects to root
+  // 🔹 Updated logout handler using API
+  const handleLogout = async () => {
+    try {
+      const message = await logoutUser();
+      alert(message || "Logout successful");
+    } catch (error) {
+      alert("Logout failed. Please try again.");
+    } finally {
+      // clear local state and redirect
+      setUser(null);
+      localStorage.removeItem("loginid");
+      localStorage.removeItem("authToken");
+      localStorage.removeItem("uname");
+      navigate("/", { replace: true });
+    }
   };
 
-  // Function to decide landing route dynamically
+  // Decide default landing page
   const getLandingRoute = () => {
     if (user.role === "admin") return "/equipment";
     if (user.role === "staff") return "/requests";
@@ -64,14 +79,8 @@ function AppContent() {
 
               {user.role === "admin" && (
                 <>
-                  <Route
-                    path="/equipment"
-                    element={<EquipmentManagement />}
-                  />
-                  <Route
-                    path="/itemmanagement"
-                    element={<ItemManagement />}
-                  />
+                  <Route path="/equipment" element={<EquipmentManagement />} />
+                  <Route path="/itemmanagement" element={<ItemManagement />} />
                 </>
               )}
 
