@@ -62,7 +62,7 @@ export default function Requests() {
 
   return (
     <div style={{ padding: "20px" }}>
-      <h1>Borrow / Return Requests</h1>
+      <h1>Approve / Reject Requests</h1>
       <p>Approve or reject pending requests below.</p>
 
       <div style={{ display: "flex", flexWrap: "wrap" }}>

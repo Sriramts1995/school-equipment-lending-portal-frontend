@@ -98,37 +98,37 @@ export default function ItemBookings() {
         }}
       >
         <label>
-          Name:
+          Name:<br/>
           <input type="text" value={name} readOnly required />
         </label>
 
         <label>
-          Category:
+          Category:<br/>
           <input type="text" value={category} readOnly required />
         </label>
 
         <label>
-          Condition:
+          Condition:<br/>
           <input type="text" value={condition} readOnly required />
         </label>
 
         <label>
-          Quantity:
+          Quantity:<br/>
           <input type="number" value={quantvalue} readOnly required />
         </label>
 
         <label>
-          Start Date:
+          Start Date:<br/>
           <input type="date" value={startdate} readOnly required />
         </label>
 
         <label>
-          End Date:
+          End Date:<br/>
           <input type="date" value={endate} readOnly required />
         </label>
 
         <label>
-          Available:
+          Available:<br/>
           <select value={available} disabled>
             <option value="true">Yes</option>
             <option value="false">No</option>
