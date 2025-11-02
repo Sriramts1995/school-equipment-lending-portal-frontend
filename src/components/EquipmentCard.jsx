@@ -18,7 +18,7 @@ export default function EquipmentCard({
   const [startDate, setStartDate] = useState(
     savedStart || new Date().toISOString().split("T")[0]
   );
-  const [endDate, setEndDate] = useState(savedEnd || "");
+  const [endDate, setEndDate] = useState(savedEnd || new Date().toISOString().split("T")[0]);
 
   // persist dates
   useEffect(() => {
