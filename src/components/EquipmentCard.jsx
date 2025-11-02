@@ -1,18 +1,30 @@
 // src/components/EquipmentCard.jsx
 import { useState, useEffect } from "react";
 
-export default function EquipmentCard({ equipment, onBook, requestStatus }) {
-  const savedStart = localStorage.getItem(`startDate_${equipment.id}`);
-  const savedEnd = localStorage.getItem(`endDate_${equipment.id}`);
+export default function EquipmentCard({
+  equipment,
+  onBook,
+  requestStatus,
+  currentUser,
+}) {
+  const storageKeyStart = `startDate_${currentUser?.id || "guest"}_${
+    equipment.id
+  }`;
+  const storageKeyEnd = `endDate_${currentUser?.id || "guest"}_${equipment.id}`;
+
+  const savedStart = localStorage.getItem(storageKeyStart);
+  const savedEnd = localStorage.getItem(storageKeyEnd);
+
   const [startDate, setStartDate] = useState(
     savedStart || new Date().toISOString().split("T")[0]
   );
   const [endDate, setEndDate] = useState(savedEnd || "");
 
+  // persist dates
   useEffect(() => {
-    localStorage.setItem(`startDate_${equipment.id}`, startDate);
-    localStorage.setItem(`endDate_${equipment.id}`, endDate);
-  }, [startDate, endDate, equipment.id]);
+    localStorage.setItem(storageKeyStart, startDate);
+    localStorage.setItem(storageKeyEnd, endDate);
+  }, [startDate, endDate, storageKeyStart, storageKeyEnd]);
 
   const handleBook = () => {
     if (!startDate || !endDate) {
@@ -22,20 +34,31 @@ export default function EquipmentCard({ equipment, onBook, requestStatus }) {
     onBook(equipment, startDate, endDate);
   };
 
-  // UI logic for button text & state
   const getButtonConfig = () => {
     switch (requestStatus?.toUpperCase()) {
       case "PENDING":
         return { label: "Pending", color: "#ccc", disabled: true };
       case "APPROVED":
         return { label: "Return", color: "#1a73e8", disabled: false };
-      case "REJECTED":
       default:
-        return { label: "Book Item", color: "#081711ff", disabled: false };
+        return { label: "Book Item", color: "#081711", disabled: false };
     }
   };
 
   const { label, color, disabled } = getButtonConfig();
+  const isBookedOrPending = ["APPROVED", "PENDING"].includes(
+    requestStatus?.toUpperCase()
+  );
+
+  // only set endDate for approved/pending if not already present
+  useEffect(() => {
+    if (isBookedOrPending) {
+      if (!endDate && savedEnd) setEndDate(savedEnd);
+    } else {
+      // new booking — clear end date
+      setEndDate("");
+    }
+  }, [isBookedOrPending]);
 
   return (
     <div
